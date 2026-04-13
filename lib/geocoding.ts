@@ -44,40 +44,82 @@ async function geocodeDestination(destination: string): Promise<DestContext | nu
   return null
 }
 
-// Step 2: search for a single place using the AI-supplied mapSearchName.
-// We trust the AI to supply a clean, terse name — no regex cleaning needed.
-// Query = "<mapSearchName>, <city>" so Mapbox can rank well even without bbox.
-// types=poi only: opening address/place search causes the geocoder to match
-// obscure suburban streets with the same name as famous landmarks.
+const MAX_DISTANCE_KM = 80
+
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const R = 6371
+  const dLat = ((b[1] - a[1]) * Math.PI) / 180
+  const dLng = ((b[0] - a[0]) * Math.PI) / 180
+  const sinLat = Math.sin(dLat / 2)
+  const sinLng = Math.sin(dLng / 2)
+  const h = sinLat * sinLat + Math.cos((a[1] * Math.PI) / 180) * Math.cos((b[1] * Math.PI) / 180) * sinLng * sinLng
+  return R * 2 * Math.asin(Math.sqrt(h))
+}
+
+// Step 2: try Nominatim (OpenStreetMap) first — far better international
+// POI coverage than Mapbox. Fall back to Mapbox if Nominatim returns nothing.
+// Always validate the result is within MAX_DISTANCE_KM of the city center so
+// a same-named place in another country never sneaks through.
 async function geocodePlace(
   mapSearchName: string,
   ctx: DestContext,
 ): Promise<[number, number] | null> {
-  const query = encodeURIComponent(`${mapSearchName}, ${ctx.city}`)
+  // Include city name so both APIs understand the geographic context
+  const queryWithCity = `${mapSearchName}, ${ctx.city}`
 
-  const params = new URLSearchParams({
-    access_token: MAPBOX_TOKEN!,
-    limit: '1',
-    types: 'poi',
-    proximity: `${ctx.center[0]},${ctx.center[1]}`,
-    bbox: ctx.bbox.join(','),
-  })
+  const validate = (lng: number, lat: number): [number, number] | null => {
+    const km = haversineKm(ctx.center, [lng, lat])
+    return km <= MAX_DISTANCE_KM ? [lng, lat] : null
+  }
 
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?${params}`
-  console.log(`[geocode] "${mapSearchName}"  bbox: ${ctx.bbox.map(n => n.toFixed(3)).join(', ')}`)
-
+  // ── Nominatim (OSM) ────────────────────────────────────────────────────
   try {
+    const url =
+      `https://nominatim.openstreetmap.org/search` +
+      `?q=${encodeURIComponent(queryWithCity)}&format=json&limit=3`
+    const res = await fetch(url, { headers: { 'User-Agent': 'Plotted/1.0' } })
+    const data: Array<{ lat: string; lon: string }> = await res.json()
+
+    for (const item of data) {
+      const coords = validate(parseFloat(item.lon), parseFloat(item.lat))
+      if (coords) {
+        const km = haversineKm(ctx.center, coords)
+        console.log(`[geocode/osm] ✓  "${mapSearchName}"  →  ${JSON.stringify(coords)}  (${km.toFixed(1)} km)`)
+        return coords
+      }
+    }
+  } catch (err) {
+    console.warn('[geocode/osm] error for', mapSearchName, err)
+  }
+
+  // ── Mapbox fallback ────────────────────────────────────────────────────
+  try {
+    const params = new URLSearchParams({
+      access_token: MAPBOX_TOKEN!,
+      limit: '5',
+      types: 'poi,address',
+      proximity: `${ctx.center[0]},${ctx.center[1]}`,
+    })
+    const url =
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
+      `${encodeURIComponent(queryWithCity)}.json?${params}`
     const res = await fetch(url)
     const data = await res.json()
-    if (data.features?.length > 0) {
-      const coords = data.features[0].center as [number, number]
-      console.log(`[geocode] ✓  "${mapSearchName}"  →  [${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}]`)
-      return coords
+
+    for (const f of data.features ?? []) {
+      const [lng, lat] = f.center as [number, number]
+      const coords = validate(lng, lat)
+      if (coords) {
+        const km = haversineKm(ctx.center, coords)
+        console.log(`[geocode/mapbox] ✓  "${mapSearchName}"  →  ${JSON.stringify(coords)}  (${km.toFixed(1)} km)`)
+        return coords
+      }
     }
-    console.warn(`[geocode] ✗  "${mapSearchName}"  — no POI found within bbox, skipping`)
   } catch (err) {
-    console.error('[geocode] fetch error for', mapSearchName, err)
+    console.warn('[geocode/mapbox] error for', mapSearchName, err)
   }
+
+  console.warn(`[geocode] ✗  "${mapSearchName}"  — not found within ${MAX_DISTANCE_KM} km of ${ctx.city}`)
   return null
 }
 
@@ -93,6 +135,8 @@ export async function geocodePlaces(places: Place[], destination: string): Promi
     const searchName = place.mapSearchName?.trim() || place.name
     const coords = await geocodePlace(searchName, ctx)
     results.push({ ...place, coordinates: coords ?? undefined })
+    // Nominatim rate limit: max 1 req/sec
+    await new Promise((r) => setTimeout(r, 1100))
   }
   return results
 }

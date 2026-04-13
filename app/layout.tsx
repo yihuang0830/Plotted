@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TravelMap AI - Smart Trip Planner",
-  description: "AI-powered travel itinerary planner with interactive maps and Reddit insights",
+  title: "Plotted — Your trip, plotted.",
+  description: "Chat with an AI to plan your trip and watch it come alive on the map.",
 };
 
 export default function RootLayout({

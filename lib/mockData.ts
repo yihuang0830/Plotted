@@ -45,7 +45,7 @@ const romeItems: MockItem[] = [
   // Day 3: Vatican City & Trastevere
   { id: '12', day: 3, order: 12, name: 'Vatican Museums',                    coordinates: [12.4545, 41.9065], description: 'Home to the Sistine Chapel. Pre-book tickets!',                                                               transport: 'Walk 10 min' },
   { id: '13', day: 3, order: 13, name: "St. Peter's Basilica",               coordinates: [12.4539, 41.9022], description: 'The largest church in the world. Climb the dome.',                                                            transport: 'Walk 15 min' },
-  { id: '14', day: 3, order: 14, name: "Castel Sant'Angelo",                 coordinates: [12.4663, 41.9031], description: 'Historic fortress on the Tiber river.',                                                                       transport: 'Bus/Walk 20 min' },
+  { id: '14', day: 3, order: 14, name: "Castel Sant'Angelo",                 coordinates: [12.4663, 41.9031], description: 'Historic fortress on the Tiber river.',                                                                       transport: 'Walk 25 min' },
   { id: '15', day: 3, order: 15, name: 'Piazza Santa Maria in Trastevere',   coordinates: [12.4698, 41.8896], description: 'Head across the river for dinner. The most charming neighborhood in Rome.',                                   transport: 'Walk 10 min' },
   { id: '16', day: 3, order: 16, name: 'Terrazza del Gianicolo',             coordinates: [12.4600, 41.8915], description: 'A slightly uphill walk, but offers the absolute best night view of Rome.',                                   transport: '' },
 ]
@@ -98,14 +98,53 @@ function buildResponse(items: MockItem[], destination: string, message: string):
 
 // ─── Exported responses ────────────────────────────────────────────────────────
 
-export const mockStLouisResponse: GeminiResponse = buildResponse(
-  stLouisItems,
-  'St. Louis, USA',
-  "Here's a perfect 2-day St. Louis itinerary — from the iconic Gateway Arch to the lush Forest Park. All coordinates are pinned and ready on the map!",
-)
+export const mockStLouisResponse: GeminiResponse = {
+  ...buildResponse(
+    stLouisItems,
+    'St. Louis, USA',
+    "Here's your personalized 2-day St. Louis itinerary — from the iconic Gateway Arch to Forest Park. All spots are pinned on the map!",
+  ),
+  mockDestination: 'stlouis',
+}
 
-export const mockRomeResponse: GeminiResponse = buildResponse(
-  romeItems,
-  'Rome, Italy',
-  "Here's your 3-day Roman adventure — Ancient Rome, the Historic Center, and Vatican City. Perfectly sequenced to minimize walking. Enjoy the Eternal City!",
-)
+export const mockRome2DayResponse: GeminiResponse = {
+  ...buildResponse(
+    romeItems.filter((i) => i.day <= 2),
+    'Rome, Italy',
+    "Here's your 2-day Roman highlight reel — Ancient Rome on day one, the Historic Center on day two. Perfectly paced for a long weekend!",
+  ),
+  mockDestination: 'rome',
+}
+
+export const mockRome3DayResponse: GeminiResponse = {
+  ...buildResponse(
+    romeItems,
+    'Rome, Italy',
+    "Here's your full 3-day Roman adventure — Ancient Rome, the Historic Center, and Vatican City + Trastevere. Perfectly sequenced to minimize walking. Enjoy the Eternal City!",
+  ),
+  mockDestination: 'rome',
+}
+
+// Clarification prompts shown before building the itinerary
+
+export const mockStLouisClarify: GeminiResponse = {
+  status: 'need_clarification',
+  message: "Great choice! St. Louis is underrated — the food scene alone is worth the trip. A couple quick questions to personalize your itinerary:",
+  questions: [
+    { type: 'slider', key: 'days', label: 'How many days do you have?', min: 1, max: 5, step: 1, unit: '' },
+    { type: 'select', key: 'budget', label: 'Daily budget?', options: ['Budget (<$100)', 'Mid-range ($100–200)', 'Splurge ($200+)'] },
+    { type: 'select', key: 'style', label: 'Travel vibe?', options: ['History & Culture', 'Food & Nightlife', 'Family-friendly', 'Mix of everything'] },
+  ],
+  mockDestination: 'stlouis',
+}
+
+export const mockRomeClarify: GeminiResponse = {
+  status: 'need_clarification',
+  message: "Roma! Excellent taste 🇮🇹 A few things so I can build the perfect trip for you:",
+  questions: [
+    { type: 'slider', key: 'days', label: 'How many days in Rome?', min: 1, max: 7, step: 1, unit: '' },
+    { type: 'select', key: 'budget', label: 'Daily budget?', options: ['Budget (€60–120)', 'Mid-range (€120–250)', 'Luxury (€250+)'] },
+    { type: 'select', key: 'interests', label: 'Top priority?', options: ['Ancient History', 'Art & Museums', 'Food & Wine', 'Hidden Gems'] },
+  ],
+  mockDestination: 'rome',
+}

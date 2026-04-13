@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('lightningcss'\\)\")",
+      "Bash(node -e \"require\\('lightningcss-darwin-arm64'\\)\")",
+      "Bash(xattr -d com.apple.quarantine /Users/pengyutang_peter/PycharmProjects/TravelMap/node_modules/lightningcss-darwin-arm64/lightningcss.darwin-arm64.node)",
+      "Bash(node -e \"require\\('lightningcss-darwin-arm64'\\); console.log\\('OK'\\)\")",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(ln -sf /Users/pengyutang_peter/PycharmProjects/TravelMap/node_modules/lightningcss-darwin-arm64/lightningcss.darwin-arm64.node /Users/pengyutang_peter/PycharmProjects/TravelMap/node_modules/lightningcss/lightningcss.darwin-arm64.node)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(python3 -c ':*)",
+      "Bash(npm install:*)",
+      "Bash(node -e \"require\\('lightningcss'\\); console.log\\('lightningcss OK'\\)\")",
+      "Bash(node -e \"require\\('@tailwindcss/oxide'\\); console.log\\('oxide OK'\\)\")",
+      "Read(//private/tmp/**)",
+      "Bash(node -e ':*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{\"userMessage\":\"Plan a trip to Rome\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{\"userMessage\":\"Rome trip\"}')"
+    ]
+  }
+}

@@ -40,13 +40,6 @@ export default function Home() {
 
       {/* Right panel - Map */}
       <div className="flex-1 relative">
-        {itinerary.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 space-y-3 z-10 pointer-events-none">
-            <span className="text-7xl">🗺️</span>
-            <p className="text-lg font-medium">Your trip map will appear here</p>
-            <p className="text-sm">Start a conversation on the left →</p>
-          </div>
-        )}
         <MapView
           itinerary={itinerary}
           destination={destination}

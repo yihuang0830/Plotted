@@ -70,8 +70,18 @@ export default function ClarifyWidget({ questions, onSubmit, onSkip }: Props) {
 
           {q.type === 'slider' && (() => {
             const bounds = getBounds(q)
+            const pct = ((answers[q.key] as number) - bounds.min) / (bounds.max - bounds.min) * 100
             return (
               <div className="space-y-1">
+                {/* Thumb value bubble */}
+                <div className="relative h-5">
+                  <span
+                    className="absolute -translate-x-1/2 font-semibold text-indigo-600 text-sm leading-none"
+                    style={{ left: `calc(${pct}% + ${(0.5 - pct / 100) * 16}px)` }}
+                  >
+                    {q.unit}{answers[q.key]}
+                  </span>
+                </div>
                 <input
                   type="range"
                   min={bounds.min}
@@ -101,9 +111,6 @@ export default function ClarifyWidget({ questions, onSubmit, onSkip }: Props) {
                       {q.unit}{bounds.min}
                     </button>
                   )}
-                  <span className="font-semibold text-indigo-600 text-sm">
-                    {q.unit}{answers[q.key]}
-                  </span>
                   {editingBound?.key === q.key && editingBound.side === 'max' ? (
                     <input
                       autoFocus

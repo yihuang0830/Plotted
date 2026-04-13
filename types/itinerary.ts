@@ -42,6 +42,8 @@ export interface GeminiResponse {
   questions?: ClarifyQuestion[]
   destination?: string
   itinerary?: DayPlan[]
+  /** Internal marker used to track mock conversation state across turns */
+  mockDestination?: string
 }
 
 export interface RedditPost {
@@ -55,4 +57,6 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   geminiData?: GeminiResponse
+  /** Geocoded itinerary — populated after geocoding completes for itinerary_ready messages */
+  itinerary?: DayPlan[]
 }
